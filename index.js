@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -45,7 +47,7 @@ if(!fs.existsSync(path.join(curDir, '/node_modules')))
   process.exit(1);
 }
 
-//process.argv.shift(); // remove Node
+process.argv.shift(); // remove Node/NPX
 process.argv.shift(); // remove this script
 
 const len = process.argv.length;

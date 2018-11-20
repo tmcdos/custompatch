@@ -1,12 +1,12 @@
 {
   "name": "custompatch",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Tool for patching buggy NPM packages instead of forking them",
   "author": "IVO GELOV",
   "private": false,
   "license": "BSD-3-Clause",
   "repository": "tmcdos/custompatch",
-  "main": "index.js",
+  "bin": "./index.js",
   "engines": {
     "node": ">= 8.0.0",
     "npm": ">= 3.0.0"
