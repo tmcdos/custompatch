@@ -17,6 +17,7 @@
   ],
   "dependencies": {
     "diff": "^3.5.0",
-    "pacote": "^9.5.0"
+    "pacote": "^9.5.0",
+    "rimram": "^2.6.3"
   }
 }

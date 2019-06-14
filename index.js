@@ -3,9 +3,9 @@
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const npmFolder = path.join(npmDir(),'node_modules','npm','node_modules');
-const pacote = require(path.join(npmFolder,'pacote'));
-const rimraf = require(path.join(npmFolder,'rimraf'));
+//const npmFolder = path.join(npmDir(),'node_modules','npm','node_modules');
+const pacote = require('pacote' /*path.join(npmFolder,'pacote')*/);
+const rimraf = require('rimraf' /*path.join(npmFolder,'rimraf')*/);
 const diff = require('diff');
 
 const version = '1.0';
