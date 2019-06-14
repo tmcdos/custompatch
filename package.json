@@ -1,6 +1,6 @@
 {
   "name": "custompatch",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "Tool for patching buggy NPM packages instead of forking them",
   "author": "IVO GELOV",
   "private": false,
@@ -16,6 +16,7 @@
     "patching", "buggy", "packages"
   ],
   "dependencies": {
-    "diff": "^3.5.0"
+    "diff": "^3.5.0",
+    "pakote": "^8.1.5"
   }
 }
