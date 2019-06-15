@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const path = require('upath');
+const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const diff = require('diff');
@@ -282,7 +282,7 @@ function loadFile(info, callback)
   }
    */
   // read the original file
-  fs.readFile(path.join(curDir, 'node_modules', path.normalize(info.index)), 'utf8', function (err, data)
+  fs.readFile(path.join(curDir, 'node_modules', pathNormalize(info.index)), 'utf8', function (err, data)
   {
     callback(err, data);
   });
@@ -291,13 +291,13 @@ function loadFile(info, callback)
 function onPatch(info, content, callback)
 {
   // replace original file with the patched content
-  if(content !== false) fs.writeFile(path.join(curDir, 'node_modules', path.normalize(info.index)), content, 'utf8', function (err)
+  if(content !== false) fs.writeFile(path.join(curDir, 'node_modules', pathNormalize(info.index)), content, 'utf8', function (err)
   {
     callback(err);
   });
   else
   {
-    echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('greenBright') + path.normalize(info.index) + stopColor() + ' was not applied - '
+    echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('greenBright') + pathNormalize(info.index) + stopColor() + ' was not applied - '
       + startColor('redBright') + ' either already applied or for different version' + stopColor());
     callback();
   }
@@ -307,4 +307,10 @@ function onComplete(patchName, err)
 {
   if(err) echo(startColor('redBright') + 'ERROR: ' + stopColor() + 'The patch ' + startColor('greenBright') + patchName + stopColor() + ' produced an error = ' + startColor('redBright') + err + stopColor());
   else echo('Successfully applied ' + startColor('greenBright') + patchName + stopColor());
+}
+
+
+function pathNormalize(pathName)
+{
+  return path.normalize(path.sep === '/' ? pathName.replace(/\\/g, '/') : pathName.replace(/\//g,'\\\\'));
 }
