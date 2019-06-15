@@ -198,6 +198,7 @@ function scanFiles(pkgName, src, patch)
   const files = fs.readdirSync(path.join(curDir, 'node_modules', pkgName, src));
   files.forEach(item =>
   {
+    if (item === 'node_modules') return;
     const pathname = path.join(src, item);
     const stat = fs.lstatSync(path.join(curDir, 'node_modules', pkgName, pathname));
     if(stat.isDirectory()) scanFiles(pkgName, pathname, patch);
