@@ -88,8 +88,8 @@ else
   patches.forEach(item =>
   {
     if(item.substr(-6) !== '.patch') return;
-    const pkg = item.replace('.patch','').split('@');
-    const dest = path.join(curDir, 'node_modules', pkg[0]);
+    const pkg = item.replace('.patch','').split('#');
+    const dest = path.join(curDir, 'node_modules', pkg[0].replace(/\+/g, path.sep));
     if(!fs.existsSync(dest))
     {
       echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'Package ' + startColor('whiteBright') + pkg[0] + stopColor() + ' is not installed - skipping this patch');
@@ -182,14 +182,27 @@ function fetchPackage(pkgName, url, version, callback)
   });
 }
 
+// replace directory separators in package names like "@vue/cli" or "@babel/register"
+function goodFileName(fn)
+{
+  const pattern = new RegExp('/', 'g');
+  return fn.replace(pattern, '+');
+}
+
+function makePatchName(pkgName, version)
+{
+  return goodFileName(pkgName) + '#' + version + '.patch';
+}
+
 // compare all files from the locally modified package with their original content
 function comparePackages(pkgName, version)
 {
-  const stream = fs.createWriteStream(path.join(patchDir, pkgName + '@' + version + '.patch'));
+  const patchFile = makePatchName(pkgName, version);
+  const stream = fs.createWriteStream(path.join(patchDir, patchFile));
   stream.cork();
   scanFiles(pkgName, '', stream);
   stream.end();
-  echo('Successfully created ' + startColor('greenBright') + pkgName + '@' + version + '.patch' + stopColor());
+  echo('Successfully created ' + startColor('greenBright') + patchFile + stopColor());
 }
 
 // recursively enumerate all files in the locally installed package
@@ -259,12 +272,13 @@ function readPatch(pkgName, version)
   {
     if(cfg.version !== version) echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('greenBright') + version + stopColor()
       + ' may not apply cleanly to the installed ' + startColor('redBright') + cfg.version + stopColor());
-    const patch = fs.readFileSync(path.join(patchDir, pkgName + '@' + version + '.patch'),'utf8');
+    const patchFile = makePatchName(pkgName, version);    
+    const patch = fs.readFileSync(path.join(patchDir, patchFile),'utf8');
     diff.applyPatches(patch,
       {
         loadFile: loadFile,
         patched: onPatch,
-        complete: onComplete.bind(null, pkgName + '@' + version + '.patch')
+        complete: onComplete.bind(null, patchFile)
       });
   }
 }
