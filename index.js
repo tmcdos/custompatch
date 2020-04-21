@@ -89,10 +89,11 @@ else
   {
     if(item.substr(-6) !== '.patch') return;
     const pkg = item.replace('.patch','').split('#');
-    const dest = path.join(curDir, 'node_modules', pkg[0].replace(/\+/g, path.sep));
+    const packageName = pkg[0].replace(/\+/g, path.sep);
+    const dest = path.join(curDir, 'node_modules', packageName);
     if(!fs.existsSync(dest))
     {
-      echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'Package ' + startColor('whiteBright') + pkg[0] + stopColor() + ' is not installed - skipping this patch');
+      echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'Package ' + startColor('whiteBright') + packageName + stopColor() + ' is not installed - skipping this patch');
       return;
     }
     readPatch(pkg[0], pkg[1]);
@@ -266,13 +267,14 @@ function createPatch(pkgName, pathname, patch)
 // fetch original NPM package, then read the patch file and try to apply hunks
 function readPatch(pkgName, version)
 {
-  echo('Applying patch for: ' + startColor('magentaBright') + pkgName + stopColor());
-  const cfg = getConfig(pkgName);
+  const packageName = pkgName.replace(/\+/g, path.sep);
+  echo('Applying patch for: ' + startColor('magentaBright') + packageName + stopColor());
+  const cfg = getConfig(packageName);
   if(cfg)
   {
     if(cfg.version !== version) echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('greenBright') + version + stopColor()
       + ' may not apply cleanly to the installed ' + startColor('redBright') + cfg.version + stopColor());
-    const patchFile = makePatchName(pkgName, version);    
+    const patchFile = pkgName + '#' + version + '.patch';
     const patch = fs.readFileSync(path.join(patchDir, patchFile),'utf8');
     diff.applyPatches(patch,
       {
