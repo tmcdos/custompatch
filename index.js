@@ -296,8 +296,10 @@ function loadFile(info, callback)
     hunks: [object1, object2, ...]
   }
    */
+  const oldName = path.join(curDir, 'node_modules', pathNormalize(info.index));
+  if(!fs.existsSync(oldName)) fs.writeFileSync(oldName, '');
   // read the original file
-  fs.readFile(path.join(curDir, 'node_modules', pathNormalize(info.index)), 'utf8', function (err, data)
+  fs.readFile(oldName, 'utf8', function (err, data)
   {
     callback(err, data);
   });
