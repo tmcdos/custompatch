@@ -73,7 +73,7 @@ patch -p1 -i patches/package-name@2.5.16.patch
 
 Software License Agreement (BSD License)
 
-Copyright (c) 2018, IVO GELOV
+Copyright (c) 2018, TMCDOS
 
 All rights reserved.
 
