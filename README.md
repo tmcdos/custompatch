@@ -43,7 +43,7 @@ Open your IDE and make the required changes for the bugfix inside your dependenc
 custompatch "name-of-the-buggy-package"
 ```
 
-This will create a folder called `patches` inside your project and a file called `name-of-the-buggy-package@version.patch` in this folder.
+This will create a folder called `patches` inside your project and a file called `name-of-the-buggy-package#version.patch` in this folder.
 This file will be a unified diff between your fixed version of the dependency and its original code.
 
 You can specify more than 1 package on the command-line - but no command-line options are accepted.
@@ -59,7 +59,7 @@ Currently there is no possibility to apply only the patch for a specific depende
 Perhaps the command-line utility `patch` can do the job but this has not been tested:
 
 ```bash
-patch -p1 -i patches/package-name@2.5.16.patch
+patch -p1 -i patches/package-name#2.5.16.patch
 ```
 
 ## Benefits of patching over forking
