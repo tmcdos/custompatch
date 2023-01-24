@@ -153,12 +153,45 @@ function getConfig(pkgName)
   return cfg;
 }
 
+// build a tarball URL for the given package version
+function npmTarballURL(pkgName, pkgVersion, registryURL)
+{
+  let registry;
+  if (registryURL) 
+  {
+    registry = registryURL.endsWith('/') ? registryURL : registryURL + '/';
+  } 
+  else 
+  {
+    registry = 'https://registry.npmjs.org/';
+  }
+
+  const scopelessName = getScopelessName(pkgName);
+  return `${registry}${pkgName}/-/${scopelessName}-${removeBuildMetadataFromVersion(pkgVersion)}.tgz`;
+}
+
+function removeBuildMetadataFromVersion (version) 
+{
+  const plusPos = version.indexOf('+');
+  if (plusPos === -1) return version;
+  return version.substring(0, plusPos);
+}
+
+function getScopelessName (name) 
+{
+  if (name[0] !== '@') return name;
+  return name.split('/')[1];
+}
+
 // build a patch for the given package
 function makePatch(pkgName)
 {
   echo('Creating patch for: ' + startColor('magentaBright') + pkgName + stopColor());
   const cfg = getConfig(pkgName);
-  if(cfg && cfg._resolved !== '') fetchPackage(pkgName, cfg._resolved, cfg.version, comparePackages);
+  if(cfg)
+  {
+    fetchPackage(pkgName, npmTarballURL(pkgName, cfg.version), cfg.version, comparePackages);
+  }
   else
   {
     echo(startColor('redBright') + 'ERROR: ' + stopColor() + 'Could not find the ' + startColor('whiteBright') + 'URL' + stopColor() + ' for ' + startColor('greenBright') + 'tarball' + stopColor());
