@@ -157,11 +157,11 @@ function getConfig(pkgName)
 function npmTarballURL(pkgName, pkgVersion, registryURL)
 {
   let registry;
-  if (registryURL) 
+  if (registryURL)
   {
     registry = registryURL.endsWith('/') ? registryURL : registryURL + '/';
-  } 
-  else 
+  }
+  else
   {
     registry = 'https://registry.npmjs.org/';
   }
@@ -170,14 +170,14 @@ function npmTarballURL(pkgName, pkgVersion, registryURL)
   return `${registry}${pkgName}/-/${scopelessName}-${removeBuildMetadataFromVersion(pkgVersion)}.tgz`;
 }
 
-function removeBuildMetadataFromVersion (version) 
+function removeBuildMetadataFromVersion (version)
 {
   const plusPos = version.indexOf('+');
   if (plusPos === -1) return version;
   return version.substring(0, plusPos);
 }
 
-function getScopelessName (name) 
+function getScopelessName (name)
 {
   if (name[0] !== '@') return name;
   return name.split('/')[1];
@@ -301,18 +301,22 @@ function createPatch(pkgName, pathname, patch)
 function readPatch(pkgName, version)
 {
   const packageName = pkgName.replace(/\+/g, path.sep);
-  echo('Applying patch for: ' + startColor('magentaBright') + packageName + stopColor());
   const cfg = getConfig(packageName);
   if(cfg)
   {
-    if(cfg.version !== version) echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('greenBright') + version + stopColor()
-      + ' may not apply cleanly to the installed ' + startColor('redBright') + cfg.version + stopColor());
     const patchFile = pkgName + '#' + version + '.patch';
     const patch = fs.readFileSync(path.join(patchDir, patchFile),'utf8');
     diff.applyPatches(patch,
       {
         loadFile: loadFile,
-        patched: onPatch,
+        patched: (info, content, callback) =>
+        {
+          echo('\nApplying patch for: ' + startColor('magentaBright') + packageName + stopColor());
+          if(cfg.version !== version) echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('magentaBright') + packageName + stopColor()
+              + startColor('greenBright') + ' v' + version + stopColor()
+              + ' may not apply cleanly to the installed ' + startColor('redBright') + cfg.version + stopColor());
+          onPatch(info, content, callback)
+        },
         complete: onComplete.bind(null, patchFile)
       });
   }
@@ -351,12 +355,13 @@ function onPatch(info, content, callback)
   {
     echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('greenBright') + pathNormalize(info.index) + stopColor() + ' was not applied - '
       + startColor('redBright') + ' either already applied or for different version' + stopColor());
-    callback();
+    callback(' ');
   }
 }
 
 function onComplete(patchName, err)
 {
+  if(err == ' ') return;
   if(err) echo(startColor('redBright') + 'ERROR: ' + stopColor() + 'The patch ' + startColor('greenBright') + patchName + stopColor() + ' produced an error = ' + startColor('redBright') + err + stopColor());
   else echo('Successfully applied ' + startColor('greenBright') + patchName + stopColor());
 }
