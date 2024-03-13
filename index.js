@@ -56,7 +56,7 @@ const curDir = process.cwd();
 const tmpDir = os.tmpdir();
 const patchDir = path.join(curDir, 'patches');
 
-echo(startColor('whiteBright') + 'CustomPatch' + stopColor() + ' version ' + startColor('greenBright') + version + stopColor());
+echo(startColor('whiteBright') + 'CustomPatch' + stopColor() + ' version ' + startColor('greenBright') + version + stopColor() + '\n');
 if(!fs.existsSync(path.join(curDir, '/node_modules')))
 {
   echo(startColor('redBright') + 'ERROR: ' + stopColor() + 'Missing ' + startColor('whiteBright') + '"node_modules"' + stopColor() + ' folder');
@@ -67,6 +67,9 @@ process.argv.shift(); // remove Node/NPX
 process.argv.shift(); // remove this script
 
 const len = process.argv.length;
+const patchFiles = [];
+const asyncResults = [];
+
 if(len > 0)
 {
   // create patches
@@ -84,8 +87,7 @@ else
     process.exit(2);
   }
   // apply patches
-  const patches = fs.readdirSync(patchDir);
-  patches.forEach(item =>
+  fs.readdirSync(patchDir).map(item =>
   {
     if(item.substr(-6) !== '.patch') return;
     const pkg = item.replace('.patch','').split('#');
@@ -96,8 +98,19 @@ else
       echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'Package ' + startColor('whiteBright') + packageName + stopColor() + ' is not installed - skipping this patch');
       return;
     }
-    readPatch(pkg[0], pkg[1]); // package name and package semver
+    patchFiles.push({
+      pkgName: pkg[0],
+      version: pkg[1],
+    });
   });
+  echo('Found ' + startColor('cyanBright') + patchFiles.length + stopColor() + ' patches');
+  patchFiles.forEach(({ pkgName, version}) =>
+  {
+    readPatch(pkgName, version);
+  });
+
+  // wait until all chunks of all patches have been processed
+  setTimeout(waitForResults, 20);
 }
 
 // find the NPM folder because PACOTE package is relative to this folder (not a global package)
@@ -298,53 +311,39 @@ function createPatch(pkgName, pathname, patch)
 }
 
 // fetch original NPM package, then read the patch file and try to apply hunks
-async function readPatch(pkgName, version)
+function readPatch(pkgName, version)
 {
   const packageName = pkgName.replace(/\+/g, path.sep);
   const cfg = getConfig(packageName);
   if(cfg)
   {
-    if (!isVersionSuitable(version, cfg.version))
-    {
-      echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('magentaBright') + packageName + stopColor()
-        + ' is for v' + startColor('greenBright') + version + stopColor()
-        + ' but you have installed ' + startColor('redBright') + cfg.version + stopColor());
-      return;
-    }
     const patchFile = pkgName + '#' + version + '.patch';
     const patch = fs.readFileSync(path.join(patchDir, patchFile),'utf8');
-    await new Promise(resolve =>
-    {
-      diff.applyPatches(patch,
+
+    const chunks = [];
+    diff.applyPatches(patch,
+      {
+        loadFile: loadFile,
+        patched: (info, content, callback) =>
         {
-          loadFile: loadFile,
-          patched: (info, content, callback) =>
-          {
-            echo('\nApplying patch for ' + startColor('magentaBright') + packageName + stopColor() + ', chunk ' + startColor('whiteBright') + info.index + stopColor());
-            if(cfg.version !== version) echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('magentaBright') + packageName + stopColor()
-              + startColor('greenBright') + ' v' + version + stopColor()
-              + ' may not apply cleanly to the installed ' + startColor('redBright') + cfg.version + stopColor());
-            // replace original file with the patched content
-            if(content !== false) fs.writeFile(path.join(curDir, 'node_modules', pathNormalize(info.index)), content, 'utf8', callback);
-            else
-            {
-              echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('greenBright') + pathNormalize(info.index) + stopColor() + ' was not applied - '
-                + startColor('redBright') + ' either already applied or for different version' + stopColor());
-              callback();
-            }
-          },
-          complete: (err) =>
-          {
-            if(err)
-            {
-              echo(startColor('redBright') + 'ERROR: ' + stopColor() + 'The patch for ' + startColor('magentaBright') + pkgName + stopColor()
-                + ' v' + startColor('greenBright') + version + stopColor() + ' produced an error = ' + startColor('redBright') + err + stopColor());
-            }
-            else echo('\n' + startColor('cyanBright') + 'Successfully' + stopColor() + ' applied patch for ' + startColor('greenBright') + pkgName + ' v' + version + stopColor());
-            resolve();
-          }
-        });
-    })
+          chunks.push({
+            packageName: pkgName,
+            packageVersion: cfg.version,
+            patchVersion: version,
+            chunkInfo: info,
+            newContent: content,
+          });
+          callback();
+        },
+        complete: (err) =>
+        {
+          asyncResults.push(chunks);
+        },
+      });
+  }
+  else
+  {
+    asyncResults.push([]);
   }
 }
 
@@ -382,4 +381,71 @@ function loadFile(info, callback)
 function pathNormalize(pathName)
 {
   return path.normalize(path.sep === '/' ? pathName.replace(/\\/g, '/') : pathName.replace(/\//g,'\\\\'));
+}
+
+function waitForResults()
+{
+  if (asyncResults.length < patchFiles.length) setTimeout(waitForResults, 20);
+  else
+  {
+    const tree = {};
+    asyncResults.flat().forEach(item =>
+    {
+      if (!item) return;
+      if (!tree[item.packageName])
+      {
+        tree[item.packageName] = {
+          packageName: item.packageName,
+          packageVersion: item.packageVersion,
+          patchVersion: item.patchVersion,
+          chunks: [],
+        };
+      }
+      tree[item.packageName].chunks.push({
+        chunkInfo: item.chunkInfo,
+        newContent: item.newContent,
+      });
+    });
+    Object.values(tree).forEach((pkg, index) =>
+    {
+      echo('\n ' + (1 + index) + ') Applying patch for ' + startColor('magentaBright') + pkg.packageName + stopColor() + ' ' + startColor('greenBright') + pkg.patchVersion + stopColor());
+      if (!isVersionSuitable(pkg.patchVersion, pkg.packageVersion))
+      {
+        echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('magentaBright') + pkg.packageName + stopColor()
+          + ' is for v' + startColor('greenBright') + pkg.patchVersion + stopColor()
+          + ' but you have installed ' + startColor('redBright') + pkg.packageVersion + stopColor());
+        return;
+      }
+      if(pkg.packageVersion !== pkg.patchVersion)
+      {
+        echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('magentaBright') + pkg.packageName + stopColor()
+          + startColor('greenBright') + ' v' + pkg.patchVersion + stopColor()
+          + ' may not apply cleanly to the installed ' + startColor('redBright') + pkg.packageVersion + stopColor());
+      }
+      pkg.chunks.forEach(chunk =>
+      {
+        echo('\nPatching chunk ' + startColor('greenBright') + pathNormalize(chunk.chunkInfo.index) + stopColor());
+        chunk.success = true;
+        // replace original file with the patched content
+        if(chunk.newContent !== false)
+        {
+          fs.writeFile(path.join(curDir, 'node_modules', pathNormalize(chunk.chunkInfo.index)), chunk.newContent, 'utf8', function (err)
+          {
+            echo('Could not write the new content = ' + startColor('redBright') + err + stopColor());
+            chunk.success = false;
+          });
+        }
+        else
+        {
+          chunk.success = false;
+          echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'Chunk failed - ' + startColor('redBright') + ' either already applied or for different version' + stopColor());
+        }
+      });
+      const allChunks = pkg.chunks.every(chunk => chunk.success);
+      const noneChunks = pkg.chunks.every(chunk => !chunk.success);
+      echo('\nPatch for ' + startColor('magentaBright') + pkg.packageName + stopColor() + ' was '
+        + startColor(allChunks ? 'cyanBright' : noneChunks ? 'redBright' : 'yellow')
+        + (allChunks ? 'successfully' : noneChunks ? 'not' : 'partially') + stopColor() + ' applied');
+    });
+  }
 }
