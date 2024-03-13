@@ -96,7 +96,7 @@ else
       echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'Package ' + startColor('whiteBright') + packageName + stopColor() + ' is not installed - skipping this patch');
       return;
     }
-    readPatch(pkg[0], pkg[1]);
+    readPatch(pkg[0], pkg[1]); // package name and package semver
   });
 }
 
@@ -298,28 +298,66 @@ function createPatch(pkgName, pathname, patch)
 }
 
 // fetch original NPM package, then read the patch file and try to apply hunks
-function readPatch(pkgName, version)
+async function readPatch(pkgName, version)
 {
   const packageName = pkgName.replace(/\+/g, path.sep);
   const cfg = getConfig(packageName);
   if(cfg)
   {
+    if (!isVersionSuitable(version, cfg.version))
+    {
+      echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('magentaBright') + packageName + stopColor()
+        + ' is for v' + startColor('greenBright') + version + stopColor()
+        + ' but you have installed ' + startColor('redBright') + cfg.version + stopColor());
+      return;
+    }
     const patchFile = pkgName + '#' + version + '.patch';
     const patch = fs.readFileSync(path.join(patchDir, patchFile),'utf8');
-    diff.applyPatches(patch,
-      {
-        loadFile: loadFile,
-        patched: (info, content, callback) =>
+    await new Promise(resolve =>
+    {
+      diff.applyPatches(patch,
         {
-          echo('\nApplying patch for: ' + startColor('magentaBright') + packageName + stopColor());
-          if(cfg.version !== version) echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('magentaBright') + packageName + stopColor()
+          loadFile: loadFile,
+          patched: (info, content, callback) =>
+          {
+            echo('\nApplying patch for ' + startColor('magentaBright') + packageName + stopColor() + ', chunk ' + startColor('whiteBright') + info.index + stopColor());
+            if(cfg.version !== version) echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('magentaBright') + packageName + stopColor()
               + startColor('greenBright') + ' v' + version + stopColor()
               + ' may not apply cleanly to the installed ' + startColor('redBright') + cfg.version + stopColor());
-          onPatch(info, content, callback)
-        },
-        complete: onComplete.bind(null, patchFile)
-      });
+            // replace original file with the patched content
+            if(content !== false) fs.writeFile(path.join(curDir, 'node_modules', pathNormalize(info.index)), content, 'utf8', callback);
+            else
+            {
+              echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('greenBright') + pathNormalize(info.index) + stopColor() + ' was not applied - '
+                + startColor('redBright') + ' either already applied or for different version' + stopColor());
+              callback();
+            }
+          },
+          complete: (err) =>
+          {
+            if(err)
+            {
+              echo(startColor('redBright') + 'ERROR: ' + stopColor() + 'The patch for ' + startColor('magentaBright') + pkgName + stopColor()
+                + ' v' + startColor('greenBright') + version + stopColor() + ' produced an error = ' + startColor('redBright') + err + stopColor());
+            }
+            else echo('\n' + startColor('cyanBright') + 'Successfully' + stopColor() + ' applied patch for ' + startColor('greenBright') + pkgName + ' v' + version + stopColor());
+            resolve();
+          }
+        });
+    })
   }
+}
+
+// return FALSE if packageSemVer is lower than patchSemVer
+function isVersionSuitable(patchSemVer, packageSemVer)
+{
+  const oldVer = patchSemVer.split('.');
+  const newVer = packageSemVer.split('.');
+  if (+oldVer[0] < +newVer[0]) return true;
+  if (+oldVer[0] > +newVer[0]) return false;
+  if (+oldVer[1] < +newVer[1]) return true;
+  if (+oldVer[1] > +newVer[1]) return false;
+  return +oldVer[2] <= +newVer[2];
 }
 
 function loadFile(info, callback)
@@ -338,34 +376,8 @@ function loadFile(info, callback)
   const oldName = path.join(curDir, 'node_modules', pathNormalize(info.index));
   if(!fs.existsSync(oldName)) fs.writeFileSync(oldName, '');
   // read the original file
-  fs.readFile(oldName, 'utf8', function (err, data)
-  {
-    callback(err, data);
-  });
+  fs.readFile(oldName, 'utf8', callback);
 }
-
-function onPatch(info, content, callback)
-{
-  // replace original file with the patched content
-  if(content !== false) fs.writeFile(path.join(curDir, 'node_modules', pathNormalize(info.index)), content, 'utf8', function (err)
-  {
-    callback(err);
-  });
-  else
-  {
-    echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('greenBright') + pathNormalize(info.index) + stopColor() + ' was not applied - '
-      + startColor('redBright') + ' either already applied or for different version' + stopColor());
-    callback(' ');
-  }
-}
-
-function onComplete(patchName, err)
-{
-  if(err == ' ') return;
-  if(err) echo(startColor('redBright') + 'ERROR: ' + stopColor() + 'The patch ' + startColor('greenBright') + patchName + stopColor() + ' produced an error = ' + startColor('redBright') + err + stopColor());
-  else echo('Successfully applied ' + startColor('greenBright') + patchName + stopColor());
-}
-
 
 function pathNormalize(pathName)
 {
