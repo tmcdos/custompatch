@@ -411,29 +411,31 @@ function waitForResults()
       echo('\n ' + (1 + index) + ') Applying patch for ' + startColor('magentaBright') + pkg.packageName + stopColor() + ' ' + startColor('greenBright') + pkg.patchVersion + stopColor());
       if (!isVersionSuitable(pkg.patchVersion, pkg.packageVersion))
       {
-        echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('magentaBright') + pkg.packageName + stopColor()
-          + ' is for v' + startColor('greenBright') + pkg.patchVersion + stopColor()
+        echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch is for v' + startColor('greenBright') + pkg.patchVersion + stopColor()
           + ' but you have installed ' + startColor('redBright') + pkg.packageVersion + stopColor());
         return;
       }
       if(pkg.packageVersion !== pkg.patchVersion)
       {
-        echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('magentaBright') + pkg.packageName + stopColor()
-          + startColor('greenBright') + ' v' + pkg.patchVersion + stopColor()
+        echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'The patch for ' + startColor('greenBright') + pkg.patchVersion + stopColor()
           + ' may not apply cleanly to the installed ' + startColor('redBright') + pkg.packageVersion + stopColor());
       }
-      pkg.chunks.forEach(chunk =>
+      pkg.chunks.forEach((chunk, subIndex) =>
       {
-        echo('\nPatching chunk ' + startColor('greenBright') + pathNormalize(chunk.chunkInfo.index) + stopColor());
+        echo('\n(' + (1 + index) + '.' + (1 + subIndex) + ') Patching chunk ' + startColor('greenBright') + pathNormalize(chunk.chunkInfo.index) + stopColor());
         chunk.success = true;
         // replace original file with the patched content
         if(chunk.newContent !== false)
         {
-          fs.writeFile(path.join(curDir, 'node_modules', pathNormalize(chunk.chunkInfo.index)), chunk.newContent, 'utf8', function (err)
+          try
           {
-            echo('Could not write the new content = ' + startColor('redBright') + err + stopColor());
+            fs.writeFileSync(path.join(curDir, 'node_modules', pathNormalize(chunk.chunkInfo.index)), chunk.newContent, 'utf8');
+          }
+          catch(err)
+          {
+            echo('Could not write the new content for chunk ' + startColor('greenBright') + pathNormalize(chunk.chunkInfo.index) + stopColor() + ' = ' + startColor('redBright') + err + stopColor());
             chunk.success = false;
-          });
+          }
         }
         else
         {
