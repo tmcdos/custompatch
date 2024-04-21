@@ -373,9 +373,15 @@ function loadFile(info, callback)
   }
    */
   const oldName = path.join(curDir, 'node_modules', pathNormalize(info.index));
-  if(!fs.existsSync(oldName)) fs.writeFileSync(oldName, '');
-  // read the original file
-  fs.readFile(oldName, 'utf8', callback);
+  if(fs.existsSync(oldName)) 
+  {
+    // read the original file
+    fs.readFile(oldName, 'utf8', callback);
+  }
+  else
+  {
+    callback(null, ''); // old file does not exist - i.e. it is empty
+  }
 }
 
 function pathNormalize(pathName)
@@ -440,6 +446,16 @@ function waitForResults()
         else
         {
           chunk.success = false;
+          const oldName = path.join(curDir, 'node_modules', pathNormalize(chunk.chunkInfo.index));
+          if(!fs.existsSync(oldName)) 
+          {
+            const folder = path.dirname(oldName);
+            if (!fs.existsSync(folder))
+            {
+              echo(startColor('yellowBright') + 'WARNING: Folder ' + stopColor() + startColor('redBright') + path.dirname(pathNormalize(chunk.chunkInfo.index)) + stopColor() + startColor('yellowBright') + ' does not exist - the patch is probably for older version');    
+              return;
+            }
+          }
           echo(startColor('yellowBright') + 'WARNING: ' + stopColor() + 'Chunk failed - ' + startColor('redBright') + ' either already applied or for different version' + stopColor());
         }
       });
