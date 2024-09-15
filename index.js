@@ -4,7 +4,8 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const diff = require('diff');
-const version = require('./package.json').version;
+const { program } = require('commander');
+const ownPkg = require('./package.json');
 const npmFolder = path.join(npmDir(),'node_modules','npm','node_modules');
 
 let pacote, rimraf;
@@ -56,28 +57,30 @@ const curDir = process.cwd();
 const tmpDir = os.tmpdir();
 const patchDir = path.join(curDir, 'patches');
 
-echo(startColor('whiteBright') + 'CustomPatch' + stopColor() + ' version ' + startColor('greenBright') + version + stopColor() + '\n');
+const patchFiles = [];
+const asyncResults = [];
+
+program
+  .name('custompatch')
+  .usage('[options] [packageName ...]')
+  .version(ownPkg.version)
+  .description('Tool for patching buggy NPM packages instead of forking them.\nWhen invoked without arguments - apply all patches from the "patches" folder.\nIf one or more package names are specified - create a patch for the given NPM package (already patched by you in your "node_modules" folder) and save it inside "patches" folder.')
+  .option('-a, --all', 'Include "package.json" files in the patch, by default these are ignored');
+
+program.parse();
+
+const programOptions = program.opts();
+if(!programOptions.version) echo(startColor('whiteBright') + 'CustomPatch' + stopColor() + ' version ' + startColor('greenBright') + ownPkg.version + stopColor() + '\n');
 if(!fs.existsSync(path.join(curDir, '/node_modules')))
 {
   echo(startColor('redBright') + 'ERROR: ' + stopColor() + 'Missing ' + startColor('whiteBright') + '"node_modules"' + stopColor() + ' folder');
   process.exit(1);
 }
 
-process.argv.shift(); // remove Node/NPX
-process.argv.shift(); // remove this script
-
-const len = process.argv.length;
-const patchFiles = [];
-const asyncResults = [];
-
-if(len > 0)
+if(program.args.length > 0)
 {
-  // create patches
-  if(!fs.existsSync(patchDir)) fs.mkdirSync(patchDir);
-  for(let i = 0; i < len; i++)
-  {
-    makePatch(process.argv[i]);
-  }
+  // create patch for each of the provided package names
+  program.args.forEach(makePatch);
 }
 else
 {
@@ -273,40 +276,40 @@ function createPatch(pkgName, pathname, patch)
   const oldFile = path.join(tmpDir, pkgName, pathname);
   let oldStr = fs.existsSync(oldFile) ? fs.readFileSync(oldFile, 'utf8') : '';
   let newStr = fs.readFileSync(newFile, 'utf8');
-  if(pathname === 'package.json') return; // skip "package.json" - comparison is not reliable because NPM reorders keys and also appends many system keys (whose names begin with underscore)
+  if(pathname === 'package.json' && !programOptions.all) return; // skip "package.json" - comparison is not reliable because NPM reorders keys and also appends many system keys (whose names begin with underscore)
   /*
-  {
-    let oldJson = {}, newJson = {};
-    try
-    {
-      oldJson = JSON.parse(oldStr);
-      newJson = JSON.parse(newStr);
-    }
-    catch(e)
-    {
-      echo(startColor('redBright') + 'ERROR: ' + stopColor() + 'Could not parse ' + startColor('green') + 'package.json' + stopColor() + ' = ' + startColor('redBright') + e.message + stopColor());
-      return;
-    }
-    // remove all keys which start with underscore
-    let key;
-    for(key in oldJson)
-      if(key[0] === '_') delete oldJson[key];
-    for(key in newJson)
-      if(key[0] === '_') delete newJson[key];
-    // sort the keys
-    let oldSorted = {}, newSorted = {};
-    Object.keys(oldJson).sort().forEach(function(key)
-    {
-      oldSorted[key] = oldJson[key];
-    });
-    Object.keys(newJson).sort().forEach(function(key)
-    {
-      newSorted[key] = newJson[key];
-    });
-    oldStr = JSON.stringify(oldSorted, null, 2);
-    newStr = JSON.stringify(newSorted, null, 2);
-  }
-  */
+   {
+   let oldJson = {}, newJson = {};
+   try
+   {
+   oldJson = JSON.parse(oldStr);
+   newJson = JSON.parse(newStr);
+   }
+   catch(e)
+   {
+   echo(startColor('redBright') + 'ERROR: ' + stopColor() + 'Could not parse ' + startColor('green') + 'package.json' + stopColor() + ' = ' + startColor('redBright') + e.message + stopColor());
+   return;
+   }
+   // remove all keys which start with underscore
+   let key;
+   for(key in oldJson)
+   if(key[0] === '_') delete oldJson[key];
+   for(key in newJson)
+   if(key[0] === '_') delete newJson[key];
+   // sort the keys
+   let oldSorted = {}, newSorted = {};
+   Object.keys(oldJson).sort().forEach(function(key)
+   {
+   oldSorted[key] = oldJson[key];
+   });
+   Object.keys(newJson).sort().forEach(function(key)
+   {
+   newSorted[key] = newJson[key];
+   });
+   oldStr = JSON.stringify(oldSorted, null, 2);
+   newStr = JSON.stringify(newSorted, null, 2);
+   }
+   */
   if(oldStr !== newStr) patch.write(diff.createTwoFilesPatch(oldFile.replace(tmpDir,''), newFile.replace(path.join(curDir, 'node_modules'),''), oldStr, newStr));
 }
 
@@ -362,18 +365,18 @@ function isVersionSuitable(patchSemVer, packageSemVer)
 function loadFile(info, callback)
 {
   /*
-  info =
-  {
-    index: '\vue2-dragula\dist\vue-dragula.js',
-    oldFileName: '\vue2-dragula\dist\vue-dragula.js',
-    oldHeader: '',
-    newFileName: '\vue2-dragula\dist\vue-dragula.js',
-    newHeader: '',
-    hunks: [object1, object2, ...]
-  }
+   info =
+   {
+   index: '\vue2-dragula\dist\vue-dragula.js',
+   oldFileName: '\vue2-dragula\dist\vue-dragula.js',
+   oldHeader: '',
+   newFileName: '\vue2-dragula\dist\vue-dragula.js',
+   newHeader: '',
+   hunks: [object1, object2, ...]
+   }
    */
   const oldName = path.join(curDir, 'node_modules', pathNormalize(info.index));
-  if(fs.existsSync(oldName)) 
+  if(fs.existsSync(oldName))
   {
     // read the original file
     fs.readFile(oldName, 'utf8', callback);
@@ -447,12 +450,12 @@ function waitForResults()
         {
           chunk.success = false;
           const oldName = path.join(curDir, 'node_modules', pathNormalize(chunk.chunkInfo.index));
-          if(!fs.existsSync(oldName)) 
+          if(!fs.existsSync(oldName))
           {
             const folder = path.dirname(oldName);
             if (!fs.existsSync(folder))
             {
-              echo(startColor('yellowBright') + 'WARNING: Folder ' + stopColor() + startColor('redBright') + path.dirname(pathNormalize(chunk.chunkInfo.index)) + stopColor() + startColor('yellowBright') + ' does not exist - the patch is probably for older version');    
+              echo(startColor('yellowBright') + 'WARNING: Folder ' + stopColor() + startColor('redBright') + path.dirname(pathNormalize(chunk.chunkInfo.index)) + stopColor() + startColor('yellowBright') + ' does not exist - the patch is probably for older version');
               return;
             }
           }
