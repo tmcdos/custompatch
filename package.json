@@ -1,15 +1,25 @@
 {
   "name": "custompatch",
-  "version": "1.0.28",
+  "version": "2.0.0",
   "description": "Tool for patching buggy NPM packages instead of forking them",
   "author": "IVO GELOV",
   "private": false,
   "license": "BSD-3-Clause",
   "repository": "github:tmcdos/custompatch",
-  "bin": "./index.js",
+  "bin": "./dist/src/cli.js",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "start": "node ./dist/src/cli.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "engines": {
-    "node": ">= 16.1.0",
-    "npm": ">= 6.0.0"
+    "node": ">= 22.9.0",
+    "npm": ">= 10.8.3"
   },
   "keywords": [
     "patching",
@@ -17,10 +27,19 @@
     "packages"
   ],
   "dependencies": {
+    "@types/diff": "^5.2.2",
+    "@types/node": "^22.5.5",
+    "@types/pacote": "^11.1.8",
     "commander": "^12.1.0",
-    "diff": "^4.0.2",
-    "pacote": "^9.5.0",
-    "rimraf": "^2.6.3",
-    "upath": "^1.1.2"
+    "diff": "^7.0.0",
+    "pacote": "^18.0.6",
+    "pathe": "^1.1.2",
+    "rimraf": "^6.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.11.0",
+    "typescript-eslint": "^8.6.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.2"
   }
 }

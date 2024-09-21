@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "module": "node16",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node16",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/ansiUtils.ts",
+    "src/cli.ts",
+    "src/fileUtils.ts",
+    "src/npmUtils.ts",
+    "src/patchUtils.ts",
+    "src/types.ts",
+    "src/utils.ts",
+    "src/variables.ts"
+  ]
+}
