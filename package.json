@@ -19,7 +19,7 @@
   ],
   "engines": {
     "node": ">= 22.9.0",
-    "npm": ">= 10.8.3"
+    "npm": ">= 10.9.0"
   },
   "keywords": [
     "patching",
@@ -28,17 +28,17 @@
   ],
   "dependencies": {
     "@types/diff": "^5.2.2",
-    "@types/node": "^22.5.5",
+    "@types/node": "^22.7.4",
     "@types/pacote": "^11.1.8",
     "commander": "^12.1.0",
     "diff": "^7.0.0",
-    "pacote": "^18.0.6",
+    "pacote": "^19.0.0",
     "pathe": "^1.1.2",
     "rimraf": "^6.0.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.11.0",
-    "typescript-eslint": "^8.6.0",
+    "@eslint/js": "^9.12.0",
+    "typescript-eslint": "^8.8.0",
     "prettier": "^3.3.3",
     "typescript": "^5.6.2"
   }
