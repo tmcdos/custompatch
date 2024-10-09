@@ -7,6 +7,6 @@ export function removeBuildMetadataFromVersion(version: string): string {
 }
 
 export function getScopelessName(name: string): string {
-    if (name[0] !== '@') return name;
+    if (!name.startsWith('@')) return name;
     return name.split('/')[1];
 }

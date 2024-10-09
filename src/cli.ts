@@ -203,7 +203,8 @@ function addPatchFileIfExists(pkgName: string, version: string): void {
                 startColor('cyanBright') +
                 patchFiles.length +
                 stopColor() +
-                ' patches'
+                ' ' +
+                (patchFiles.length === 1 ? 'patch' : 'patches')
         );
 
         for (const { pkgName, version } of patchFiles) {

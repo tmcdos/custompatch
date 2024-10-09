@@ -185,7 +185,7 @@ export async function readPatch(
 
         for (const patchItem of patches) {
             // Ensure that we have a valid file name
-            const filePath = patchItem.newFileName || patchItem.oldFileName;
+            const filePath = patchItem.newFileName ?? patchItem.oldFileName;
             if (!filePath) {
                 console.log(
                     startColor('redBright') +
