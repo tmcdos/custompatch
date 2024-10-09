@@ -54,12 +54,24 @@ The process is exactly the same as for creating a patch for the first time.
 
 ### Applying patches
 
-Run `custompatch` without arguments inside your project folder - it will apply all the patches from `patches` folder.
-Currently there is no possibility to apply only the patch for a specific dependency. Also, it is not yet possible to undo a patch.
-Perhaps the command-line utility `patch` can do the job but this has not been tested:
+Run `custompatch` without arguments inside your project folder - it will apply all the patches from `patches` folder. If you want to target specific patches you can use the --patch (-p) flag like so:
 
 ```bash
-patch -p1 -i patches/package-name#2.5.16.patch
+custompatch --patch "name-of-the-buggy-package"
+```
+
+### Reversing patches
+
+To reverse all patches you can use the --reverse (-r) flag like so:
+
+```bash
+custompatch --reverse
+```
+
+To reverse specific patches you can use the --reverse (-r) flag like so:
+
+```bash
+custompatch --reverse "name-of-the-buggy-package"
 ```
 
 ## Benefits of patching over forking
