@@ -28,11 +28,11 @@
   ],
   "dependencies": {
     "@types/diff": "^5.2.3",
-    "@types/node": "^22.7.5",
+    "@types/node": "^22.7.6",
     "@types/pacote": "^11.1.8",
     "commander": "^12.1.0",
     "diff": "^7.0.0",
-    "pacote": "^19.0.0",
+    "pacote": "^19.0.1",
     "pathe": "^1.1.2",
     "rimraf": "^6.0.1"
   },
