@@ -8,7 +8,7 @@ const { program } = require('commander');
 const ownPkg = require('./package.json');
 const npmFolder = path.join(npmDir(),'node_modules','npm','node_modules');
 
-let pacote, rimraf;
+let pacote;
 try
 {
   pacote = require('pacote');
@@ -16,14 +16,6 @@ try
 catch(e)
 {
   pacote = require(path.join(npmFolder,'pacote'));
-}
-try
-{
-  rimraf = require('rimraf');
-}
-catch(e)
-{
-  rimraf = require(path.join(npmFolder,'rimraf'));
 }
 
 // ANSI styles
@@ -222,7 +214,7 @@ function fetchPackage(pkgName, url, version, callback)
   pacote.extract(url, dest).then(function ()
   {
     callback(pkgName, version);
-    rimraf(dest, function (err)
+    fs.rm(dest, { recursive: true, force: true }, function (err)
     {
       if(err) echo(startColor('redBright') + 'ERROR: ' + stopColor() + 'Could not clean up the TEMP folder');
     });

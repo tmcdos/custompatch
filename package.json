@@ -19,7 +19,6 @@
   "dependencies": {
     "commander": "^12.1.0",
     "diff": "^4.0.2",
-    "rimraf": "^2.6.3",
     "pacote": "^20.0.0"
   }
 }
