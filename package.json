@@ -33,13 +33,12 @@
     "commander": "^12.1.0",
     "diff": "^7.0.0",
     "pacote": "^19.0.1",
-    "pathe": "^1.1.2",
-    "rimraf": "^6.0.1"
+    "pathe": "^1.1.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",
-    "typescript-eslint": "^8.9.0",
     "prettier": "^3.3.3",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.9.0"
   }
 }

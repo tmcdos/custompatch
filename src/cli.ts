@@ -7,7 +7,6 @@ import * as path from 'pathe';
 import * as os from 'os';
 import { program } from 'commander';
 import pacote from 'pacote';
-import { rimraf } from 'rimraf';
 
 import { startColor, stopColor } from './ansiUtils';
 import ownPkg from '../package.json';
@@ -300,7 +299,7 @@ async function fetchPackage(
     }
 
     try {
-        await rimraf(dest);
+        await fs.promises.rm(dest, { recursive: true, force: true });
     } catch (err) {
         let errorMessage: string;
 
