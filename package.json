@@ -8,8 +8,8 @@
   "repository": "github:tmcdos/custompatch",
   "bin": "./index.js",
   "engines": {
-    "node": ">= 16.1.0",
-    "npm": ">= 6.0.0"
+    "node": "^18.17.0 || >=20.5.0",
+    "npm": ">= 9.6.7"
   },
   "keywords": [
     "patching",
@@ -19,8 +19,8 @@
   "dependencies": {
     "commander": "^12.1.0",
     "diff": "^4.0.2",
-    "pacote": "^9.5.0",
     "rimraf": "^2.6.3",
     "upath": "^1.1.2"
+    "pacote": "^20.0.0"
   }
 }
