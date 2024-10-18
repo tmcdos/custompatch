@@ -12,6 +12,7 @@ This tool does what [patch-package](https://www.npmjs.com/package/patch-package)
 - it never chokes on its own patches
 - it does not break if you try to apply a patch more than once (but shows a warning)
 - it does not require/depend on GIT
+- it does not require a lockfile present when creating patches
  
 When you have made a bugfix for one of your dependencies but the author/maintainers refuse to accept your PR - you do not need to fork the package.
 Create a patch and seamlessly apply it locally for all your builds.
