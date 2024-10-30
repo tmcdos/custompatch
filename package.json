@@ -27,8 +27,8 @@
     "packages"
   ],
   "dependencies": {
-    "@types/diff": "^5.2.3",
-    "@types/node": "^22.7.9",
+    "@types/diff": "^6.0.0",
+    "@types/node": "^22.8.4",
     "@types/pacote": "^11.1.8",
     "commander": "^12.1.0",
     "diff": "^7.0.0",
@@ -39,6 +39,6 @@
     "@eslint/js": "^9.13.0",
     "prettier": "^3.3.3",
     "typescript": "^5.6.3",
-    "typescript-eslint": "^8.11.0"
+    "typescript-eslint": "^8.12.2"
   }
 }
