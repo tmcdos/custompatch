@@ -18,7 +18,7 @@
     "README.md"
   ],
   "engines": {
-    "node": ">= 22.10.0",
+    "node": ">= 22.11.0",
     "npm": ">= 10.9.0"
   },
   "keywords": [
@@ -28,7 +28,7 @@
   ],
   "dependencies": {
     "@types/diff": "^6.0.0",
-    "@types/node": "^22.8.4",
+    "@types/node": "^22.9.0",
     "@types/pacote": "^11.1.8",
     "commander": "^12.1.0",
     "diff": "^7.0.0",
@@ -36,9 +36,9 @@
     "pathe": "^1.1.2"
   },
   "devDependencies": {
-    "@eslint/js": "^9.13.0",
+    "@eslint/js": "^9.14.0",
     "prettier": "^3.3.3",
     "typescript": "^5.6.3",
-    "typescript-eslint": "^8.12.2"
+    "typescript-eslint": "^8.13.0"
   }
 }
