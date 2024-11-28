@@ -28,7 +28,7 @@
   ],
   "dependencies": {
     "@types/diff": "^6.0.0",
-    "@types/node": "^22.10.0",
+    "@types/node": "^22.10.1",
     "@types/pacote": "^11.1.8",
     "commander": "^12.1.0",
     "diff": "^7.0.0",
