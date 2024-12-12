@@ -2,7 +2,7 @@
 
 Patch a buggy NPM package without forking it.
 
-Based on the handy [diff](https://github.com/kpdecker/jsdiff) package (there is a `jsdiff` published on the NPM registry but it is a bogus one)
+Based on the handy [diff](https://github.com/kpdecker/jsdiff) package (there is a `jsdiff` published on the NPM registry, but it is a bogus one)
 
 ## WHY
 

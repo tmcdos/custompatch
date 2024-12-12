@@ -1,11 +1,11 @@
 {
   "name": "custompatch",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "Tool for patching buggy NPM packages instead of forking them",
-  "author": "IVO GELOV",
+  "author": "SmushyTaco",
   "private": false,
-  "license": "BSD-3-Clause",
-  "repository": "github:tmcdos/custompatch",
+  "license": "MIT",
+  "repository": "github:SmushyTaco/custompatch",
   "bin": "./dist/src/cli.js",
   "scripts": {
     "build": "tsc",
