@@ -4,7 +4,7 @@ import { parsePatchName, makePatchName, pathNormalize, readFileContent } from '.
 import { curDir, patchDir } from './variables';
 import fs from 'node:fs';
 import path from 'node:path';
-import diff from 'diff';
+import { applyPatch, parsePatch, reversePatch } from 'diff';
 
 /**
  * fetch original NPM package, then read the patch file and try to apply or reverse chunks
@@ -30,6 +30,10 @@ function readPatch(pkgName, version, patchCounter, reversing)
       ' ',
       startColor('greenBright'),
       version,
+      stopColor(),
+      ' onto ',
+      startColor('whiteBright'),
+      cfg.version,
       stopColor()
     );
     if (!isVersionSuitable(version, cfg.version))
@@ -72,7 +76,7 @@ function readPatch(pkgName, version, patchCounter, reversing)
       const patchFile = makePatchName(pkgName, version);
       const patch = fs.readFileSync(path.join(patchDir, patchFile), 'utf8');
 
-      const chunks = diff.parsePatch(patch);
+      const chunks = parsePatch(patch);
       chunks.forEach((chunk, subIndex) =>
       {
         // Ensure that we have a valid file name
@@ -110,14 +114,14 @@ function readPatch(pkgName, version, patchCounter, reversing)
               stopColor()
             );
             // Reverse the patch
-            const reversedPatchText = diff.reversePatch(chunk);
-            const reversePatchedContent = diff.applyPatch(fileContent, reversedPatchText);
+            const reversedPatchText = reversePatch(chunk);
+            const reversePatchedContent = applyPatch(fileContent, reversedPatchText);
 
             if (reversePatchedContent === false)
             {
               // Failed to reverse the patch
               // Attempt to apply the original patch to check if it's already reversed
-              const patchedContent = diff.applyPatch(fileContent, chunk);
+              const patchedContent = applyPatch(fileContent, chunk);
 
               if (patchedContent !== false)
               {
@@ -126,12 +130,9 @@ function readPatch(pkgName, version, patchCounter, reversing)
                   startColor('yellowBright'),
                   'WARNING: ',
                   stopColor(),
-                  'Patch already reversed for ',
-                  startColor('greenBright'),
-                  filePath,
-                  stopColor()
+                  'Patch already reversed',
                 );
-                chunk.success = false;
+                chunk.success = true;
               }
               else
               {
@@ -186,14 +187,14 @@ function readPatch(pkgName, version, patchCounter, reversing)
               stopColor()
             );
             // Apply the patch
-            const patchedContent = diff.applyPatch(fileContent, chunk);
+            const patchedContent = applyPatch(fileContent, chunk);
 
             if (patchedContent === false)
             {
               // Failed to apply patch normally
               // Try applying the reversed patch to check if already applied
-              const reversedPatchText = diff.reversePatch(chunk);
-              const reversePatchedContent = diff.applyPatch(fileContent, reversedPatchText);
+              const reversedPatchText = reversePatch(chunk);
+              const reversePatchedContent = applyPatch(fileContent, reversedPatchText);
 
               if (reversePatchedContent !== false)
               {
@@ -202,19 +203,16 @@ function readPatch(pkgName, version, patchCounter, reversing)
                   startColor('yellowBright'),
                   'WARNING: ',
                   stopColor(),
-                  'Patch already applied to ',
-                  startColor('greenBright'),
-                  fileName,
-                  stopColor()
+                  'Patch already applied',
                 );
-                chunk.success = false;
+                chunk.success = true;
               }
               else
               {
                 // Patch failed for other reasons
-                if (!fs.existsSync(chunk.oldFileName))
+                if (!fs.existsSync(fileName))
                 {
-                  const folder = path.dirname(chunk.oldFileName);
+                  const folder = path.dirname(fileName);
                   if (!fs.existsSync(folder))
                   {
                     echo(
@@ -222,10 +220,11 @@ function readPatch(pkgName, version, patchCounter, reversing)
                       'WARNING: Folder ',
                       stopColor(),
                       startColor('redBright'),
-                      path.dirname(pathNormalize(chunk.oldFileName)),
+                      path.dirname(fileName),
                       stopColor(),
                       startColor('yellowBright'),
-                      ' does not exist - the patch is probably for older version'
+                      ' does not exist - the patch is probably for older version',
+                      stopColor(),
                     );
                     chunk.success = false;
                   }
@@ -233,12 +232,12 @@ function readPatch(pkgName, version, patchCounter, reversing)
                 else
                 {
                   echo(
-                    startColor('yellowBright') +
-                    'WARNING: ' +
-                    stopColor() +
-                    'Chunk failed - ' +
-                    startColor('redBright') +
-                    ' either already applied or for different version',
+                    startColor('yellowBright'),
+                    'WARNING: ',
+                    stopColor(),
+                    'Chunk failed - ',
+                    startColor('redBright'),
+                    cfg.version !== version ? ' either already applied or for different version' : 'probably already applied',
                     stopColor()
                   );
                   chunk.success = false;
@@ -269,20 +268,20 @@ function readPatch(pkgName, version, patchCounter, reversing)
           }
         }
       });
+      const allChunks = chunks.every(chunk => chunk.success);
+      const noneChunks = chunks.every(chunk => !chunk.success);
+      echo(
+        '\nPatch for ',
+        startColor('magentaBright'),
+        pkgName,
+        stopColor(),
+        ' was ',
+        startColor(allChunks ? 'cyanBright' : noneChunks ? 'redBright' : 'yellow'),
+        (allChunks ? 'successfully' : noneChunks ? 'not' : 'partially'),
+        stopColor(),
+        reversing ? ' reversed' : ' applied'
+      );
     }
-    const allChunks = chunks.every(chunk => chunk.success);
-    const noneChunks = chunks.every(chunk => !chunk.success);
-    echo(
-      '\nPatch for ',
-      startColor('magentaBright'),
-      pkgName,
-      stopColor(),
-      ' was ',
-      startColor(allChunks ? 'cyanBright' : noneChunks ? 'redBright' : 'yellow'),
-      (allChunks ? 'successfully' : noneChunks ? 'not' : 'partially'),
-      stopColor(),
-      reversing ? ' reversed' : ' applied'
-    );
   }
 }
 
@@ -296,9 +295,10 @@ export function applyPatches(packageNames = [], reversing = false)
   if (hasPatches())
   {
     // apply patches
+    const patchFiles = [];
     fs.readdirSync(patchDir).map(item =>
     {
-      if(!item.endsWitdh('.patch')) return;
+      if(!item.endsWith('.patch')) return;
       const pkg = parsePatchName(item);
       if (packageNames.length > 0 ? packageNames.includes(pkg.pkgName) : true)
       {

@@ -59,5 +59,5 @@ function ansi(code)
  */
 export function echo(...variableArguments)
 {
-  console.log.apply(null, variableArguments.join(''));
+  console.log.call(null, variableArguments.join(''));
 }

@@ -69,7 +69,7 @@ export function readFileContent(filePath)
  */
 export function makePatchName(pkgName, version)
 {
-  return pkgName.replace(/\//g, '+') + '#' + version + '.patch';
+  return pkgName.replace(/[\\\/]/g, '+') + '#' + version + '.patch';
 }
 
 /**

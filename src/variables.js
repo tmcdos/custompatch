@@ -2,7 +2,7 @@ import { program } from 'commander';
 import os from 'node:os';
 import path from 'node:path';
 
-import ownPkg from '../package.json';
+import { version } from '../package.json';
 
 /**
  * @type String
@@ -20,7 +20,7 @@ export const patchDir = path.join(curDir, 'patches');
 program
   .name('custompatch')
   .usage('[options] [packageName ...]')
-  .version(ownPkg.version)
+  .version(version)
   .description(
     'Tool for patching buggy NPM packages instead of forking them.\n' +
     'When invoked without arguments - apply all patches from the "patches" folder.\n' +

@@ -1,80 +1,12 @@
 #!/usr/bin/env node
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 
 // package.json
-var package_default = {
-  name: "custompatch",
-  version: "1.0.28",
-  description: "Tool for patching buggy NPM packages instead of forking them",
-  author: "IVO GELOV",
-  private: false,
-  license: "BSD-3-Clause",
-  repository: "github:tmcdos/custompatch",
-  bin: "./dist/custompatch.js",
-  scripts: {
-    build: "esbuild ./src/index.js --bundle --platform=node --packages=external --target=es2020,node16 --outfile=dist/custompatch.js"
-  },
-  engines: {
-    node: ">= 16.20.0",
-    npm: ">= 9.6.7"
-  },
-  keywords: [
-    "patching",
-    "buggy",
-    "packages"
-  ],
-  dependencies: {
-    commander: "^12.1.0",
-    diff: "^7.0.0",
-    pacote: "^18.0.6"
-  },
-  devDependencies: {
-    "@babel/eslint-parser": "^7.13.14",
-    "@types/diff": "^5.2.2",
-    "@types/node": "^22.5.5",
-    "@types/pacote": "^11.1.8",
-    esbuild: "0.24.2",
-    eslint: "^8.49.0",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-import-resolver-webpack": "^0.13.8",
-    "eslint-plugin-import": "^2.25.3",
-    "eslint-plugin-n": "^15.0.0",
-    "eslint-plugin-perfectionist": "^3.4.0",
-    "eslint-plugin-promise": "^6.0.0",
-    "eslint-plugin-simple-import-sort": "^12.1.1"
-  },
-  overrides: {
-    "eslint-plugin-sort-keys-vue-fix": {
-      eslint: "^8.49.0"
-    }
-  }
-};
+var version = "1.0.29";
 
 // src/index.js
-var import_commander2 = require("commander");
-var import_node_fs6 = __toESM(require("node:fs"));
-var import_node_path7 = __toESM(require("node:path"));
+import { program as program2 } from "commander";
+import fs6 from "node:fs";
+import path7 from "node:path";
 
 // src/ansiUtils.js
 var ansiColors = [
@@ -105,21 +37,21 @@ function ansi(code) {
   return "\x1B[" + code + "m";
 }
 function echo(...variableArguments) {
-  console.log.apply(null, variableArguments.join(""));
+  console.log.call(null, variableArguments.join(""));
 }
 
 // src/utils.js
-var import_node_fs = __toESM(require("node:fs"));
-var import_node_path2 = __toESM(require("node:path"));
+import fs from "node:fs";
+import path2 from "node:path";
 
 // src/variables.js
-var import_commander = require("commander");
-var import_node_os = __toESM(require("node:os"));
-var import_node_path = __toESM(require("node:path"));
+import { program } from "commander";
+import os from "node:os";
+import path from "node:path";
 var curDir = process.cwd();
-var tmpDir = import_node_os.default.tmpdir();
-var patchDir = import_node_path.default.join(curDir, "patches");
-import_commander.program.name("custompatch").usage("[options] [packageName ...]").version(package_default.version).description(
+var tmpDir = os.tmpdir();
+var patchDir = path.join(curDir, "patches");
+program.name("custompatch").usage("[options] [packageName ...]").version(version).description(
   'Tool for patching buggy NPM packages instead of forking them.\nWhen invoked without arguments - apply all patches from the "patches" folder.\nIf one or more package names are specified - create a patch for the given NPM package (already patched by you in your "node_modules" folder) and save it inside "patches" folder.'
 ).option(
   "-a, --all",
@@ -131,16 +63,16 @@ import_commander.program.name("custompatch").usage("[options] [packageName ...]"
   "-p, --patch",
   "Apply the patch(es) to the specified package(s) instead of all patches"
 );
-import_commander.program.parse();
-var programOptions = import_commander.program.opts();
+program.parse();
+var programOptions = program.opts();
 
 // src/utils.js
-function removeBuildMetadataFromVersion(version) {
-  const plusPos = version.indexOf("+");
+function removeBuildMetadataFromVersion(version2) {
+  const plusPos = version2.indexOf("+");
   if (plusPos === -1) {
-    return version;
+    return version2;
   }
-  return version.substring(0, plusPos);
+  return version2.substring(0, plusPos);
 }
 function getScopelessName(name) {
   if (name[0] !== "@") {
@@ -149,7 +81,7 @@ function getScopelessName(name) {
   return name.split("/")[1];
 }
 function hasPatches() {
-  if (!import_node_fs.default.existsSync(patchDir)) {
+  if (!fs.existsSync(patchDir)) {
     echo(
       startColor("yellowBright"),
       "WARNING: ",
@@ -165,9 +97,9 @@ function hasPatches() {
   return true;
 }
 function getConfig(pkgName) {
-  const folder = import_node_path2.default.join(curDir, "node_modules", pkgName);
-  const cfgName = import_node_path2.default.join(folder, "package.json");
-  if (!import_node_fs.default.existsSync(folder)) {
+  const folder = path2.join(curDir, "node_modules", pkgName);
+  const cfgName = path2.join(folder, "package.json");
+  if (!fs.existsSync(folder)) {
     echo(
       startColor("redBright"),
       "ERROR: ",
@@ -184,7 +116,7 @@ function getConfig(pkgName) {
     return false;
   }
   try {
-    import_node_fs.default.accessSync(cfgName, import_node_fs.default.constants.R_OK);
+    fs.accessSync(cfgName, fs.constants.R_OK);
   } catch (e) {
     echo(
       startColor("redBright"),
@@ -201,7 +133,7 @@ function getConfig(pkgName) {
     );
     return false;
   }
-  const pkgConfig = import_node_fs.default.readFileSync(cfgName, "utf8");
+  const pkgConfig = fs.readFileSync(cfgName, "utf8");
   let cfg = {};
   try {
     cfg = JSON.parse(pkgConfig);
@@ -234,21 +166,21 @@ function isVersionSuitable(patchSemVer, packageSemVer) {
 }
 
 // src/fileUtils.js
-var import_node_fs2 = __toESM(require("node:fs"));
-var import_node_path3 = __toESM(require("node:path"));
+import fs2 from "node:fs";
+import path3 from "node:path";
 function pathNormalize(pathName) {
-  return import_node_path3.default.normalize(
-    import_node_path3.default.sep === "/" ? pathName.replace(/\\/g, "/") : pathName.replace(/\//g, "\\\\")
+  return path3.normalize(
+    path3.sep === "/" ? pathName.replace(/\\/g, "/") : pathName.replace(/\//g, "\\\\")
   );
 }
 function ensureDirectoryExists(dirPath) {
-  if (!import_node_fs2.default.existsSync(dirPath)) {
-    import_node_fs2.default.mkdirSync(dirPath, { recursive: true });
+  if (!fs2.existsSync(dirPath)) {
+    fs2.mkdirSync(dirPath, { recursive: true });
   }
 }
 function readFileContent(filePath) {
   try {
-    return import_node_fs2.default.readFileSync(filePath, "utf8");
+    return fs2.readFileSync(filePath, "utf8");
   } catch (err) {
     let errorMessage;
     if (err instanceof Error) {
@@ -265,23 +197,23 @@ function readFileContent(filePath) {
     return "";
   }
 }
-function makePatchName(pkgName, version) {
-  return pkgName.replace(/\//g, "+") + "#" + version + ".patch";
+function makePatchName(pkgName, version2) {
+  return pkgName.replace(/[\\\/]/g, "+") + "#" + version2 + ".patch";
 }
 function parsePatchName(filename) {
   const pkg = filename.replace(".patch", "").split("#");
   return {
-    pkgName: pkg[0].replace(/\+/g, import_node_path3.default.sep),
+    pkgName: pkg[0].replace(/\+/g, path3.sep),
     version: pkg[1]
   };
 }
 
 // src/patchApplying.js
-var import_node_fs3 = __toESM(require("node:fs"));
-var import_node_path4 = __toESM(require("node:path"));
-var import_diff = __toESM(require("diff"));
-function readPatch(pkgName, version, patchCounter, reversing) {
-  const packageName = pkgName.replace(/\+/g, import_node_path4.default.sep);
+import fs3 from "node:fs";
+import path4 from "node:path";
+import { applyPatch, parsePatch, reversePatch } from "diff";
+function readPatch(pkgName, version2, patchCounter, reversing) {
+  const packageName = pkgName.replace(/\+/g, path4.sep);
   const cfg = getConfig(packageName);
   if (cfg) {
     echo(
@@ -295,17 +227,21 @@ function readPatch(pkgName, version, patchCounter, reversing) {
       stopColor(),
       " ",
       startColor("greenBright"),
-      version,
+      version2,
+      stopColor(),
+      " onto ",
+      startColor("whiteBright"),
+      cfg.version,
       stopColor()
     );
-    if (!isVersionSuitable(version, cfg.version)) {
+    if (!isVersionSuitable(version2, cfg.version)) {
       echo(
         startColor("yellowBright"),
         "WARNING: ",
         stopColor(),
         "The patch is for v",
         startColor("greenBright"),
-        version,
+        version2,
         stopColor(),
         " but you have installed ",
         startColor("redBright"),
@@ -313,14 +249,14 @@ function readPatch(pkgName, version, patchCounter, reversing) {
         stopColor()
       );
     } else {
-      if (version !== cfg.version) {
+      if (version2 !== cfg.version) {
         echo(
           startColor("yellowBright"),
           "WARNING: ",
           stopColor(),
           "The patch for ",
           startColor("greenBright"),
-          version,
+          version2,
           stopColor(),
           " may not ",
           reversing ? "reverse" : "apply",
@@ -330,10 +266,10 @@ function readPatch(pkgName, version, patchCounter, reversing) {
           stopColor()
         );
       }
-      const patchFile = makePatchName(pkgName, version);
-      const patch = import_node_fs3.default.readFileSync(import_node_path4.default.join(patchDir, patchFile), "utf8");
-      const chunks2 = import_diff.default.parsePatch(patch);
-      chunks2.forEach((chunk, subIndex) => {
+      const patchFile = makePatchName(pkgName, version2);
+      const patch = fs3.readFileSync(path4.join(patchDir, patchFile), "utf8");
+      const chunks = parsePatch(patch);
+      chunks.forEach((chunk, subIndex) => {
         const filePath = chunk.newFileName ?? chunk.oldFileName;
         if (!filePath) {
           echo(
@@ -348,7 +284,7 @@ function readPatch(pkgName, version, patchCounter, reversing) {
           chunk.success = false;
         } else {
           const normalizedPath = pathNormalize(filePath);
-          const fileName = import_node_path4.default.join(curDir, "node_modules", normalizedPath);
+          const fileName = path4.join(curDir, "node_modules", normalizedPath);
           const fileContent = readFileContent(fileName);
           if (reversing) {
             echo(
@@ -362,21 +298,18 @@ function readPatch(pkgName, version, patchCounter, reversing) {
               filePath,
               stopColor()
             );
-            const reversedPatchText = import_diff.default.reversePatch(chunk);
-            const reversePatchedContent = import_diff.default.applyPatch(fileContent, reversedPatchText);
+            const reversedPatchText = reversePatch(chunk);
+            const reversePatchedContent = applyPatch(fileContent, reversedPatchText);
             if (reversePatchedContent === false) {
-              const patchedContent = import_diff.default.applyPatch(fileContent, chunk);
+              const patchedContent = applyPatch(fileContent, chunk);
               if (patchedContent !== false) {
                 echo(
                   startColor("yellowBright"),
                   "WARNING: ",
                   stopColor(),
-                  "Patch already reversed for ",
-                  startColor("greenBright"),
-                  filePath,
-                  stopColor()
+                  "Patch already reversed"
                 );
-                chunk.success = false;
+                chunk.success = true;
               } else {
                 echo(
                   startColor("yellowBright"),
@@ -391,7 +324,7 @@ function readPatch(pkgName, version, patchCounter, reversing) {
               }
             } else {
               try {
-                import_node_fs3.default.writeFileSync(fileName, reversePatchedContent, "utf8");
+                fs3.writeFileSync(fileName, reversePatchedContent, "utf8");
               } catch (err) {
                 echo(
                   startColor("redBright"),
@@ -420,40 +353,43 @@ function readPatch(pkgName, version, patchCounter, reversing) {
               filePath,
               stopColor()
             );
-            const patchedContent = import_diff.default.applyPatch(fileContent, chunk);
+            const patchedContent = applyPatch(fileContent, chunk);
             if (patchedContent === false) {
-              const reversedPatchText = import_diff.default.reversePatch(chunk);
-              const reversePatchedContent = import_diff.default.applyPatch(fileContent, reversedPatchText);
+              const reversedPatchText = reversePatch(chunk);
+              const reversePatchedContent = applyPatch(fileContent, reversedPatchText);
               if (reversePatchedContent !== false) {
                 echo(
                   startColor("yellowBright"),
                   "WARNING: ",
                   stopColor(),
-                  "Patch already applied to ",
-                  startColor("greenBright"),
-                  fileName,
-                  stopColor()
+                  "Patch already applied"
                 );
-                chunk.success = false;
+                chunk.success = true;
               } else {
-                if (!import_node_fs3.default.existsSync(chunk.oldFileName)) {
-                  const folder = import_node_path4.default.dirname(chunk.oldFileName);
-                  if (!import_node_fs3.default.existsSync(folder)) {
+                if (!fs3.existsSync(fileName)) {
+                  const folder = path4.dirname(fileName);
+                  if (!fs3.existsSync(folder)) {
                     echo(
                       startColor("yellowBright"),
                       "WARNING: Folder ",
                       stopColor(),
                       startColor("redBright"),
-                      import_node_path4.default.dirname(pathNormalize(chunk.oldFileName)),
+                      path4.dirname(fileName),
                       stopColor(),
                       startColor("yellowBright"),
-                      " does not exist - the patch is probably for older version"
+                      " does not exist - the patch is probably for older version",
+                      stopColor()
                     );
                     chunk.success = false;
                   }
                 } else {
                   echo(
-                    startColor("yellowBright") + "WARNING: " + stopColor() + "Chunk failed - " + startColor("redBright") + " either already applied or for different version",
+                    startColor("yellowBright"),
+                    "WARNING: ",
+                    stopColor(),
+                    "Chunk failed - ",
+                    startColor("redBright"),
+                    cfg.version !== version2 ? " either already applied or for different version" : "probably already applied",
                     stopColor()
                   );
                   chunk.success = false;
@@ -461,7 +397,7 @@ function readPatch(pkgName, version, patchCounter, reversing) {
               }
             } else {
               try {
-                import_node_fs3.default.writeFileSync(fileName, patchedContent, "utf8");
+                fs3.writeFileSync(fileName, patchedContent, "utf8");
               } catch (err) {
                 echo(
                   "Could not write the new content for chunk ",
@@ -479,30 +415,31 @@ function readPatch(pkgName, version, patchCounter, reversing) {
           }
         }
       });
+      const allChunks = chunks.every((chunk) => chunk.success);
+      const noneChunks = chunks.every((chunk) => !chunk.success);
+      echo(
+        "\nPatch for ",
+        startColor("magentaBright"),
+        pkgName,
+        stopColor(),
+        " was ",
+        startColor(allChunks ? "cyanBright" : noneChunks ? "redBright" : "yellow"),
+        allChunks ? "successfully" : noneChunks ? "not" : "partially",
+        stopColor(),
+        reversing ? " reversed" : " applied"
+      );
     }
-    const allChunks = chunks.every((chunk) => chunk.success);
-    const noneChunks = chunks.every((chunk) => !chunk.success);
-    echo(
-      "\nPatch for ",
-      startColor("magentaBright"),
-      pkgName,
-      stopColor(),
-      " was ",
-      startColor(allChunks ? "cyanBright" : noneChunks ? "redBright" : "yellow"),
-      allChunks ? "successfully" : noneChunks ? "not" : "partially",
-      stopColor(),
-      reversing ? " reversed" : " applied"
-    );
   }
 }
 function applyPatches(packageNames = [], reversing = false) {
   if (hasPatches()) {
-    import_node_fs3.default.readdirSync(patchDir).map((item) => {
-      if (!item.endsWitdh(".patch")) return;
+    const patchFiles = [];
+    fs3.readdirSync(patchDir).map((item) => {
+      if (!item.endsWith(".patch")) return;
       const pkg = parsePatchName(item);
       if (packageNames.length > 0 ? packageNames.includes(pkg.pkgName) : true) {
-        const dest = import_node_path4.default.join(curDir, "node_modules", pkg.pkgName);
-        if (!import_node_fs3.default.existsSync(dest)) {
+        const dest = path4.join(curDir, "node_modules", pkg.pkgName);
+        if (!fs3.existsSync(dest)) {
           echo(
             startColor("yellowBright"),
             "WARNING: ",
@@ -542,16 +479,16 @@ function applyPatches(packageNames = [], reversing = false) {
 }
 
 // src/npmUtils.js
-var import_pacote = __toESM(require("pacote"));
-var import_node_fs4 = __toESM(require("node:fs"));
-var import_node_path5 = __toESM(require("node:path"));
+import pacote from "pacote";
+import fs4 from "node:fs";
+import path5 from "node:path";
 function npmTarballURL(pkgName, pkgVersion) {
   const scopelessName = getScopelessName(pkgName);
   return `https://registry.npmjs.org/${pkgName}/-/${scopelessName}-${removeBuildMetadataFromVersion(pkgVersion)}.tgz`;
 }
 function fetchPackage(pkgName, pkgVersion, callback) {
   const url = npmTarballURL(pkgName, pkgVersion);
-  const dest = import_node_path5.default.join(tmpDir, pkgName);
+  const dest = path5.join(tmpDir, pkgName);
   echo(
     "Fetching tarball of ",
     startColor("whiteBright"),
@@ -562,9 +499,9 @@ function fetchPackage(pkgName, pkgVersion, callback) {
     url,
     stopColor()
   );
-  import_pacote.default.extract(url, dest).then(() => {
+  pacote.extract(url, dest).then(() => {
     callback(pkgName, pkgVersion);
-    import_node_fs4.default.rm(dest, { recursive: true, force: true }, (err) => {
+    fs4.rm(dest, { recursive: true, force: true }, (err) => {
       if (err) {
         echo(
           startColor("redBright"),
@@ -584,9 +521,9 @@ function fetchPackage(pkgName, pkgVersion, callback) {
 }
 
 // src/patchCreation.js
-var import_node_fs5 = __toESM(require("node:fs"));
-var import_node_path6 = __toESM(require("node:path"));
-var import_diff2 = __toESM(require("diff"));
+import fs5 from "node:fs";
+import path6 from "node:path";
+import { createTwoFilesPatch } from "diff";
 function createPatches(packageNames) {
   packageNames.forEach(makePatch);
 }
@@ -594,31 +531,31 @@ function goodFileName(fn) {
   const pattern = new RegExp("/", "g");
   return fn.replace(pattern, "+");
 }
-function makePatchName2(pkgName, version) {
-  return goodFileName(pkgName) + "#" + version + ".patch";
+function makePatchName2(pkgName, version2) {
+  return goodFileName(pkgName) + "#" + version2 + ".patch";
 }
 function createPatch(pkgName, pathname, patch) {
   if (pathname === "package.json" && !programOptions.all) return;
-  const newFile = import_node_path6.default.join(curDir, "node_modules", pkgName, pathname);
-  const oldFile = import_node_path6.default.join(tmpDir, pkgName, pathname);
-  const oldStr = import_node_fs5.default.existsSync(oldFile) ? import_node_fs5.default.readFileSync(oldFile, "utf8") : "";
-  const newStr = import_node_fs5.default.readFileSync(newFile, "utf8");
-  if (oldStr !== newStr) patch.write(import_diff2.default.createTwoFilesPatch(oldFile.replace(tmpDir, ""), newFile.replace(import_node_path6.default.join(curDir, "node_modules"), ""), oldStr, newStr));
+  const newFile = path6.join(curDir, "node_modules", pkgName, pathname);
+  const oldFile = path6.join(tmpDir, pkgName, pathname);
+  const oldStr = fs5.existsSync(oldFile) ? fs5.readFileSync(oldFile, "utf8") : "";
+  const newStr = fs5.readFileSync(newFile, "utf8");
+  if (oldStr !== newStr) patch.write(createTwoFilesPatch(oldFile.replace(tmpDir, ""), newFile.replace(path6.join(curDir, "node_modules"), ""), oldStr, newStr));
 }
 function scanFiles(pkgName, src, patch) {
-  const files = import_node_fs5.default.readdirSync(import_node_path6.default.join(curDir, "node_modules", pkgName, src));
+  const files = fs5.readdirSync(path6.join(curDir, "node_modules", pkgName, src));
   files.forEach((item) => {
     if (item === "node_modules") return;
-    const pathname = import_node_path6.default.join(src, item);
-    const stat = import_node_fs5.default.lstatSync(import_node_path6.default.join(curDir, "node_modules", pkgName, pathname));
+    const pathname = path6.join(src, item);
+    const stat = fs5.lstatSync(path6.join(curDir, "node_modules", pkgName, pathname));
     if (stat.isDirectory()) scanFiles(pkgName, pathname, patch);
     else createPatch(pkgName, pathname, patch);
   });
 }
-function comparePackages(pkgName, version) {
-  const patchFile = makePatchName2(pkgName, version);
+function comparePackages(pkgName, version2) {
+  const patchFile = makePatchName2(pkgName, version2);
   ensureDirectoryExists(patchDir);
-  const stream = import_node_fs5.default.createWriteStream(import_node_path6.default.join(patchDir, patchFile));
+  const stream = fs5.createWriteStream(path6.join(patchDir, patchFile));
   stream.on("error", (err) => {
     echo(
       startColor("redBright"),
@@ -684,12 +621,12 @@ if (!programOptions.version) {
     stopColor(),
     " version ",
     startColor("greenBright"),
-    package_default.version,
+    version,
     stopColor(),
     "\n"
   );
 }
-if (!import_node_fs6.default.existsSync(import_node_path7.default.join(curDir, "node_modules"))) {
+if (!fs6.existsSync(path7.join(curDir, "node_modules"))) {
   echo(
     startColor("redBright"),
     "ERROR: ",
@@ -712,11 +649,11 @@ if (programOptions.patch && programOptions.reverse) {
   process.exit(1);
 }
 if (programOptions.patch) {
-  applyPatches(import_commander2.program.args);
+  applyPatches(program2.args);
 } else if (programOptions.reverse) {
-  applyPatches(import_commander2.program.args, true);
-} else if (import_commander2.program.args.length > 0) {
-  createPatches(import_commander2.program.args);
+  applyPatches(program2.args, true);
+} else if (program2.args.length > 0) {
+  createPatches(program2.args);
 } else {
   applyPatches();
 }

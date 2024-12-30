@@ -5,7 +5,7 @@ import { getConfig } from './utils';
 import { ensureDirectoryExists } from './fileUtils';
 import fs from 'node:fs';
 import path from 'node:path';
-import diff from 'diff';
+import { createTwoFilesPatch } from 'diff';
 
 /**
  *
@@ -51,7 +51,7 @@ function createPatch(pkgName, pathname, patch)
   const oldFile = path.join(tmpDir, pkgName, pathname);
   const oldStr = fs.existsSync(oldFile) ? fs.readFileSync(oldFile, 'utf8') : '';
   const newStr = fs.readFileSync(newFile, 'utf8');
-  if(oldStr !== newStr) patch.write(diff.createTwoFilesPatch(oldFile.replace(tmpDir,''), newFile.replace(path.join(curDir, 'node_modules'),''), oldStr, newStr));
+  if(oldStr !== newStr) patch.write(createTwoFilesPatch(oldFile.replace(tmpDir,''), newFile.replace(path.join(curDir, 'node_modules'),''), oldStr, newStr));
 }
 
 /**
