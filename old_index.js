@@ -5,7 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const diff = require('diff');
 const { program } = require('commander');
-const ownPkg = require('./package.json');
+const ownPkg = require('package.json');
 const npmFolder = path.join(npmDir(),'node_modules','npm','node_modules');
 
 let pacote, rimraf;

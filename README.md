@@ -12,8 +12,9 @@ This tool does what [patch-package](https://www.npmjs.com/package/patch-package)
 - it never chokes on its own patches
 - it does not break if you try to apply a patch more than once (but shows a warning)
 - it does not require/depend on GIT
+- it does not require a lockfile present when creating patches
  
-When you have made a bugfix for one of your dependencies but the author/maintainers refuse to accept your PR - you do not need to fork the package.
+When you have made a bugfix for one of your dependencies but the author/maintainers refuse to accept your PR - you do not need to fork the package.  
 Create a patch and seamlessly apply it locally for all your builds.
 
 ## Installation
@@ -43,7 +44,7 @@ Open your IDE and make the required changes for the bugfix inside your dependenc
 custompatch "name-of-the-buggy-package"
 ```
 
-This will create a folder called `patches` inside your project and a file called `name-of-the-buggy-package#version.patch` in this folder.
+This will create a folder called `patches` inside your project and a file called `name-of-the-buggy-package#version.patch` in this folder.  
 This file will be a unified diff between your fixed version of the dependency and its original code.
 
 You can specify more than 1 package on the command-line - but no command-line options are accepted.
@@ -54,12 +55,25 @@ The process is exactly the same as for creating a patch for the first time.
 
 ### Applying patches
 
-Run `custompatch` without arguments inside your project folder - it will apply all the patches from `patches` folder.
-Currently there is no possibility to apply only the patch for a specific dependency. Also, it is not yet possible to undo a patch.
-Perhaps the command-line utility `patch` can do the job but this has not been tested:
+Run `custompatch` without arguments inside your project folder - it will apply all the patches from `patches` folder.  
+If you want to target specific patches you can use the `--patch (-p)` flag like so:
 
 ```bash
-patch -p1 -i patches/package-name#2.5.16.patch
+custompatch --patch [name-of-the-buggy-package]
+```
+
+### Reversing patches
+
+To reverse all patches you can use the `--reverse (-r)` flag like so:
+
+```bash
+custompatch --reverse
+```
+
+To reverse specific patches you can use the `--reverse (-r)` flag like so:
+
+```bash
+custompatch --reverse [name-of-the-buggy-package]
 ```
 
 ## Benefits of patching over forking
@@ -68,6 +82,11 @@ patch -p1 -i patches/package-name#2.5.16.patch
 - CustomPatch warns you when a patch was not applied cleanly - so that you can check that your fix is still valid for the new version of dependency
 - Keep your patches colocated with the code that depends on them
 - Patches can be reviewed as part of your normal review process, forks probably can't
+
+## Patch filenames format
+
+The filename of a patch will be composed as `packageName`, followed by the `#` symbol, followed by `packageSemVer` (and the extension is `.patch`)  
+If the `packageName` contains a symbol which collides with the directory separator of the current filesystem - these symbols will be replaced with `+`
 
 ## License
 
