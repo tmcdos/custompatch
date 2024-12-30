@@ -2,6 +2,7 @@
 .thumbs.db
 node_modules
 *.babel
+old_index.js
 
 .env.local
 .env.*.local

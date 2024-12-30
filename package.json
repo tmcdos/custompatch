@@ -1,6 +1,6 @@
 {
   "name": "custompatch",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Tool for patching buggy NPM packages instead of forking them",
   "author": "IVO GELOV",
   "private": false,
@@ -8,7 +8,7 @@
   "repository": "github:tmcdos/custompatch",
   "bin": "./dist/custompatch.mjs",
   "scripts": {
-    "build": "esbuild ./src/index.js --bundle --platform=node --format=esm --packages=external --target=es2020,node16 --outfile=dist/custompatch.mjs"
+    "build": "esbuild ./src/index.js --bundle --platform=node --format=esm --packages=external --target=es2020,node16 --outfile=index.mjs"
   },
   "engines": {
     "node": ">= 16.20.0",
