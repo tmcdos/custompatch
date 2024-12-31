@@ -154,6 +154,7 @@ function readPatch(pkgName, version, patchCounter, reversing)
               try
               {
                 fs.writeFileSync(fileName, reversePatchedContent, 'utf8');
+                chunk.success = true;
               }
               catch (err)
               {
@@ -212,6 +213,7 @@ function readPatch(pkgName, version, patchCounter, reversing)
                 // Patch failed for other reasons
                 if (!fs.existsSync(fileName))
                 {
+                  chunk.success = false;
                   const folder = path.dirname(fileName);
                   if (!fs.existsSync(folder))
                   {
@@ -226,7 +228,6 @@ function readPatch(pkgName, version, patchCounter, reversing)
                       ' does not exist - the patch is probably for older version',
                       stopColor(),
                     );
-                    chunk.success = false;
                   }
                 }
                 else
@@ -249,6 +250,7 @@ function readPatch(pkgName, version, patchCounter, reversing)
               try
               {
                 fs.writeFileSync(fileName, patchedContent, 'utf8');
+                chunk.success = true;
               }
               catch (err)
               {

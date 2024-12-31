@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // package.json
-var version = "1.0.29";
+var version = "1.1.2";
 
 // src/index.js
 import { program as program2 } from "commander";
@@ -325,6 +325,7 @@ function readPatch(pkgName, version2, patchCounter, reversing) {
             } else {
               try {
                 fs3.writeFileSync(fileName, reversePatchedContent, "utf8");
+                chunk.success = true;
               } catch (err) {
                 echo(
                   startColor("redBright"),
@@ -367,6 +368,7 @@ function readPatch(pkgName, version2, patchCounter, reversing) {
                 chunk.success = true;
               } else {
                 if (!fs3.existsSync(fileName)) {
+                  chunk.success = false;
                   const folder = path4.dirname(fileName);
                   if (!fs3.existsSync(folder)) {
                     echo(
@@ -380,7 +382,6 @@ function readPatch(pkgName, version2, patchCounter, reversing) {
                       " does not exist - the patch is probably for older version",
                       stopColor()
                     );
-                    chunk.success = false;
                   }
                 } else {
                   echo(
@@ -398,6 +399,7 @@ function readPatch(pkgName, version2, patchCounter, reversing) {
             } else {
               try {
                 fs3.writeFileSync(fileName, patchedContent, "utf8");
+                chunk.success = true;
               } catch (err) {
                 echo(
                   "Could not write the new content for chunk ",
