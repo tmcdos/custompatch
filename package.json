@@ -9,7 +9,7 @@
   "bin": "./index.mjs",
   "scripts": {
     "build": "esbuild ./src/index.js --bundle --platform=node --format=esm --target=es2020,node16 --packages=external --outfile=index.mjs",
-    "prepare": "esbuild ./src/index.js --bundle --platform=node --format=esm --target=es2020,node16 --packages=external --outfile=index.mjs"
+    "prepare": "npm run build"
   },
   "engines": {
     "node": ">= 16.20.0",
