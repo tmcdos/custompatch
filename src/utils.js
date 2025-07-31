@@ -20,7 +20,7 @@ export function removeBuildMetadataFromVersion(version)
 }
 
 /**
- *
+ * Removes the author's prefix from the package name (if any)
  * @param name {String}
  * @returns {string}
  */
@@ -33,6 +33,10 @@ export function getScopelessName(name)
   return name.split('/')[1];
 }
 
+/**
+ * Checks if the folder "patches" inside the project exists. If not - throws an error
+ * @returns {boolean}
+ */
 export function hasPatches()
 {
   if (!fs.existsSync(patchDir))
@@ -53,7 +57,7 @@ export function hasPatches()
 }
 
 /**
- * returns FALSE on error, Package.JSON on success
+ * returns FALSE on error, Package.JSON of the requested package on success
  * @param pkgName {String}
  * @returns {Object|boolean}
  */
