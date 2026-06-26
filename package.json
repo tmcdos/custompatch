@@ -1,6 +1,6 @@
 {
   "name": "custompatch",
-  "version": "1.1.11",
+  "version": "1.1.12",
   "description": "Tool for patching buggy NPM packages instead of forking them",
   "author": "IVO GELOV",
   "private": false,
@@ -13,6 +13,8 @@
     "custompatch": "index.mjs"
   },
   "scripts": {
+    "bump": "npm version patch",
+    "release": "npm run bump && npm publish",
     "build": "esbuild ./src/index.js --bundle --platform=node --format=esm --target=es2020,node16 --packages=external --outfile=index.mjs",
     "prepare": "npm run build"
   },
