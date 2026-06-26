@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // package.json
-var version = "1.1.9";
+var version = "1.1.10";
 
 // src/index.js
 import { program as program2 } from "commander";
