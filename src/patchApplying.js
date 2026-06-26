@@ -9,16 +9,20 @@ import { applyPatch, parsePatch, reversePatch } from 'diff';
 /**
  * fetch original NPM package, then read the patch file and try to apply or reverse chunks
  * @param pkgName {String}
- * @param version {String}
+ * @param versions {String[]} Array with versions of pkgName for which there is a patch
  * @param patchCounter {Number} Sequential number of the current patch when multiple (begins from one)
  * @param reversing {Boolean}
  */
-function readPatch(pkgName, version, patchCounter, reversing)
+function readPatch(pkgName, versions, patchCounter, reversing)
 {
   const packageName = pkgName.replace(/\+/g, path.sep);
   const cfg = getConfig(packageName);
   if(cfg)
   {
+    // find the most suitable version of the patch
+    const descendingVersions = versions.sort().reverse();
+    let mostSuitable = descendingVersions.find(ver => ver <= cfg.version);
+    if (!mostSuitable) mostSuitable = versions.pop();
     echo('\n ',
       patchCounter,
       ') ',
@@ -29,14 +33,14 @@ function readPatch(pkgName, version, patchCounter, reversing)
       stopColor(),
       ' ',
       startColor('greenBright'),
-      version,
+      mostSuitable,
       stopColor(),
       ' onto ',
       startColor('whiteBright'),
       cfg.version,
       stopColor()
     );
-    if (!isVersionSuitable(version, cfg.version))
+    if (!isVersionSuitable(mostSuitable, cfg.version))
     {
       echo(
         startColor('yellowBright'),
@@ -44,7 +48,7 @@ function readPatch(pkgName, version, patchCounter, reversing)
         stopColor(),
         'The patch is for v',
         startColor('greenBright'),
-        version,
+        mostSuitable,
         stopColor(),
         ' but you have installed ',
         startColor('redBright'),
@@ -54,7 +58,7 @@ function readPatch(pkgName, version, patchCounter, reversing)
     }
     else
     {
-      if (version !== cfg.version)
+      if (mostSuitable !== cfg.version)
       {
         echo(
           startColor('yellowBright'),
@@ -62,7 +66,7 @@ function readPatch(pkgName, version, patchCounter, reversing)
           stopColor(),
           'The patch for ',
           startColor('greenBright'),
-          version,
+          mostSuitable,
           stopColor(),
           ' may not ',
           reversing ? 'reverse' : 'apply',
@@ -73,7 +77,7 @@ function readPatch(pkgName, version, patchCounter, reversing)
         );
       }
 
-      const patchFile = makePatchName(pkgName, version);
+      const patchFile = makePatchName(pkgName, mostSuitable);
       const patch = fs.readFileSync(path.join(patchDir, patchFile), 'utf8');
 
       const chunks = parsePatch(patch);
@@ -238,7 +242,7 @@ function readPatch(pkgName, version, patchCounter, reversing)
                     stopColor(),
                     'Chunk failed - ',
                     startColor('redBright'),
-                    cfg.version !== version ? ' either already applied or for different version' : 'probably already applied',
+                    cfg.version !== mostSuitable ? ' either already applied or for different version' : 'probably already applied',
                     stopColor()
                   );
                   chunk.success = false;
@@ -277,6 +281,10 @@ function readPatch(pkgName, version, patchCounter, reversing)
         startColor('magentaBright'),
         pkgName,
         stopColor(),
+        ' ',
+        startColor('greenBright'),
+        mostSuitable,
+        stopColor(),
         ' was ',
         startColor(allChunks ? 'cyanBright' : noneChunks ? 'redBright' : 'yellow'),
         (allChunks ? 'successfully' : noneChunks ? 'not' : 'partially'),
@@ -297,11 +305,13 @@ export function applyPatches(packageNames = [], reversing = false)
   if (hasPatches())
   {
     // apply patches
-    const patchFiles = [];
+    const patchFiles = {};
+    let numPatches = 0;
     fs.readdirSync(patchDir).map(item =>
     {
       if(!item.endsWith('.patch')) return;
       const pkg = parsePatchName(item);
+      // if specific package names are requested through CLI - apply only them, otherwise apply every patch
       if (packageNames.length > 0 ? packageNames.includes(pkg.pkgName) : true)
       {
         const dest = path.join(curDir, 'node_modules', pkg.pkgName);
@@ -319,19 +329,23 @@ export function applyPatches(packageNames = [], reversing = false)
           );
           return;
         }
-        patchFiles.push(pkg);
+        // combine the patches for different versions of the same NPM package
+        patchFiles[pkg.pkgName] = (patchFiles[pkg.pkgName] || []).concat(pkg.version);
+        numPatches++;
       }
     });
+    const patches = Object.entries(patchFiles);
     echo(
       'Found ',
       startColor('cyanBright'),
-      patchFiles.length,
+      numPatches,
       stopColor(),
       ' patches'
     );
-    if (packageNames.length > 0 && patchFiles.length !== packageNames.length)
+    if (packageNames.length > 0)
     {
-      packageNames.filter(name => !patchFiles.find(file => file.pkgName !== name)).forEach(name =>
+      // check if we have patches for all requested packages from CLI - if requested explicitly
+      packageNames.filter(name => !patches.find(file => file[0] !== name)).forEach(name =>
       {
         echo(
           'No patch was found for ',
@@ -341,9 +355,10 @@ export function applyPatches(packageNames = [], reversing = false)
         );
       });
     }
-    patchFiles.forEach((item, index) =>
+    // apply patches intelligently - only for the installed version of the package, or for the most recent previous version
+    patches.forEach((item, index) =>
     {
-      readPatch(item.pkgName, item.version, index + 1, reversing);
+      readPatch(item[0], item[1], index + 1, reversing);
     });
   }
 }

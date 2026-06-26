@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // package.json
-var version = "1.1.8";
+var version = "1.1.9";
 
 // src/index.js
 import { program as program2 } from "commander";
@@ -212,10 +212,13 @@ function parsePatchName(filename) {
 import fs3 from "node:fs";
 import path4 from "node:path";
 import { applyPatch, parsePatch, reversePatch } from "diff";
-function readPatch(pkgName, version2, patchCounter, reversing) {
+function readPatch(pkgName, versions, patchCounter, reversing) {
   const packageName = pkgName.replace(/\+/g, path4.sep);
   const cfg = getConfig(packageName);
   if (cfg) {
+    const descendingVersions = versions.sort().reverse();
+    let mostSuitable = descendingVersions.find((ver) => ver <= cfg.version);
+    if (!mostSuitable) mostSuitable = versions.pop();
     echo(
       "\n ",
       patchCounter,
@@ -227,21 +230,21 @@ function readPatch(pkgName, version2, patchCounter, reversing) {
       stopColor(),
       " ",
       startColor("greenBright"),
-      version2,
+      mostSuitable,
       stopColor(),
       " onto ",
       startColor("whiteBright"),
       cfg.version,
       stopColor()
     );
-    if (!isVersionSuitable(version2, cfg.version)) {
+    if (!isVersionSuitable(mostSuitable, cfg.version)) {
       echo(
         startColor("yellowBright"),
         "WARNING: ",
         stopColor(),
         "The patch is for v",
         startColor("greenBright"),
-        version2,
+        mostSuitable,
         stopColor(),
         " but you have installed ",
         startColor("redBright"),
@@ -249,14 +252,14 @@ function readPatch(pkgName, version2, patchCounter, reversing) {
         stopColor()
       );
     } else {
-      if (version2 !== cfg.version) {
+      if (mostSuitable !== cfg.version) {
         echo(
           startColor("yellowBright"),
           "WARNING: ",
           stopColor(),
           "The patch for ",
           startColor("greenBright"),
-          version2,
+          mostSuitable,
           stopColor(),
           " may not ",
           reversing ? "reverse" : "apply",
@@ -266,7 +269,7 @@ function readPatch(pkgName, version2, patchCounter, reversing) {
           stopColor()
         );
       }
-      const patchFile = makePatchName(pkgName, version2);
+      const patchFile = makePatchName(pkgName, mostSuitable);
       const patch = fs3.readFileSync(path4.join(patchDir, patchFile), "utf8");
       const chunks = parsePatch(patch);
       chunks.forEach((chunk, subIndex) => {
@@ -390,7 +393,7 @@ function readPatch(pkgName, version2, patchCounter, reversing) {
                     stopColor(),
                     "Chunk failed - ",
                     startColor("redBright"),
-                    cfg.version !== version2 ? " either already applied or for different version" : "probably already applied",
+                    cfg.version !== mostSuitable ? " either already applied or for different version" : "probably already applied",
                     stopColor()
                   );
                   chunk.success = false;
@@ -424,6 +427,10 @@ function readPatch(pkgName, version2, patchCounter, reversing) {
         startColor("magentaBright"),
         pkgName,
         stopColor(),
+        " ",
+        startColor("greenBright"),
+        mostSuitable,
+        stopColor(),
         " was ",
         startColor(allChunks ? "cyanBright" : noneChunks ? "redBright" : "yellow"),
         allChunks ? "successfully" : noneChunks ? "not" : "partially",
@@ -435,7 +442,8 @@ function readPatch(pkgName, version2, patchCounter, reversing) {
 }
 function applyPatches(packageNames = [], reversing = false) {
   if (hasPatches()) {
-    const patchFiles = [];
+    const patchFiles = {};
+    let numPatches = 0;
     fs3.readdirSync(patchDir).map((item) => {
       if (!item.endsWith(".patch")) return;
       const pkg = parsePatchName(item);
@@ -454,18 +462,20 @@ function applyPatches(packageNames = [], reversing = false) {
           );
           return;
         }
-        patchFiles.push(pkg);
+        patchFiles[pkg.pkgName] = (patchFiles[pkg.pkgName] || []).concat(pkg.version);
+        numPatches++;
       }
     });
+    const patches = Object.entries(patchFiles);
     echo(
       "Found ",
       startColor("cyanBright"),
-      patchFiles.length,
+      numPatches,
       stopColor(),
       " patches"
     );
-    if (packageNames.length > 0 && patchFiles.length !== packageNames.length) {
-      packageNames.filter((name) => !patchFiles.find((file) => file.pkgName !== name)).forEach((name) => {
+    if (packageNames.length > 0) {
+      packageNames.filter((name) => !patches.find((file) => file[0] !== name)).forEach((name) => {
         echo(
           "No patch was found for ",
           startColor("cyanBright"),
@@ -474,8 +484,8 @@ function applyPatches(packageNames = [], reversing = false) {
         );
       });
     }
-    patchFiles.forEach((item, index) => {
-      readPatch(item.pkgName, item.version, index + 1, reversing);
+    patches.forEach((item, index) => {
+      readPatch(item[0], item[1], index + 1, reversing);
     });
   }
 }
